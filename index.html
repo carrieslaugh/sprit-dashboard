@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⛽ Diesel Monitor – Dinkelsbühl</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Literata:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #f4f2ee;
+  --bg2:       #ede9e2;
+  --surface:   #ffffff;
+  --border:    #e5e0d8;
+  --border2:   #d6d0c7;
+  --text:      #1a1814;
+  --text2:     #6b6560;
+  --text3:     #9b9590;
+  --accent:    #1d6b3e;
+  --accent-bg: #edf7f1;
+  --accent-b:  #b6dfc7;
+  --red:       #c0392b;
+  --amber:     #d97706;
+  --amber-bg:  #fef3cd;
+  --shadow:    0 1px 3px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.05);
+  --shadow-lg: 0 2px 8px rgba(0,0,0,.06), 0 12px 40px rgba(0,0,0,.08);
+  --radius:    16px;
+  --sans:      'Outfit', sans-serif;
+  --serif:     'Literata', Georgia, serif;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  min-height: 100vh;
+  padding: 28px 20px 60px;
+  /* subtle linen texture */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='4' height='4' fill='%23f4f2ee'/%3E%3Ccircle cx='1' cy='1' r='.4' fill='%23e8e4dc' opacity='.5'/%3E%3Ccircle cx='3' cy='3' r='.4' fill='%23e8e4dc' opacity='.5'/%3E%3C/svg%3E");
+}
+
+/* ── HEADER ─────────────────────────────────────────────────────────────────── */
+.header {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  flex-wrap: wrap; gap: 16px; margin-bottom: 28px;
+  animation: fadeUp .5s ease both;
+}
+.header-left .eyebrow {
+  font-size: 10px; font-weight: 600; letter-spacing: .15em;
+  text-transform: uppercase; color: var(--text3); margin-bottom: 6px;
+}
+.header-left h1 {
+  font-family: var(--sans); font-size: 28px; font-weight: 800;
+  color: var(--text); letter-spacing: -.03em; line-height: 1.1;
+}
+.header-left .sub {
+  font-size: 13px; color: var(--text2); margin-top: 4px; font-weight: 400;
+}
+.header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+
+/* ── STATUS PILL ─────────────────────────────────────────────────────────────── */
+.pill {
+  display: flex; align-items: center; gap: 7px;
+  border-radius: 99px; padding: 6px 14px;
+  font-size: 11px; font-weight: 500;
+  transition: background .3s, border .3s;
+}
+.pill.ok   { background:#edf7f1; border:1px solid var(--accent-b); color: var(--accent); }
+.pill.load { background:#f7f5f0; border:1px solid var(--border);   color: var(--text3); }
+.pill.err  { background:#fef2f2; border:1px solid #fca5a5;         color: var(--red); }
+.pdot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+.pdot.ok  { background:var(--accent); animation: blink 2s infinite; }
+.pdot.err { background:var(--red); }
+.spin { display:inline-block; animation:spin 1.2s linear infinite; }
+
+/* ── BUTTONS ─────────────────────────────────────────────────────────────────── */
+.btns { display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; }
+button {
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: 99px; color: var(--text2); font-family: var(--sans);
+  font-size: 11px; font-weight: 500; padding: 6px 14px;
+  cursor: pointer; transition: all .2s;
+}
+button:hover:not(:disabled) { background: var(--bg2); border-color: var(--text3); color: var(--text); }
+button.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+button:disabled { opacity: .45; cursor: not-allowed; }
+
+/* ── HINT BANNER ─────────────────────────────────────────────────────────────── */
+.hint {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-size: 11px; color: var(--amber); font-weight: 500;
+  background: var(--amber-bg); border: 1px solid #fde68a;
+  border-radius: 99px; padding: 5px 14px; margin-top: 10px;
+}
+
+/* ── ROUTE BANNER ────────────────────────────────────────────────────────────── */
+.route-banner {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 14px 20px; margin-bottom: 24px;
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  box-shadow: var(--shadow);
+  animation: fadeUp .4s .1s ease both;
+}
+.route-banner .stop  { font-weight: 700; font-size: 13px; color: var(--text); }
+.route-banner .arrow { font-size: 12px; color: var(--text3); }
+.route-banner .rlbl  { margin-left: auto; font-size: 10px; color: var(--text3); font-weight: 500; letter-spacing:.05em; text-transform:uppercase; }
+
+/* ── SECTION ─────────────────────────────────────────────────────────────────── */
+.section { margin-bottom: 24px; animation: fadeUp .45s ease both; }
+.sec-title {
+  font-size: 10px; font-weight: 700; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--text3); margin-bottom: 12px;
+}
+
+/* ── CARD GRID ───────────────────────────────────────────────────────────────── */
+.card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+
+/* ── STATION CARD ────────────────────────────────────────────────────────────── */
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 18px 16px;
+  box-shadow: var(--shadow); position: relative;
+  transition: transform .2s, box-shadow .2s;
+}
+.card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+.card.best {
+  border-color: var(--accent-b);
+  background: linear-gradient(135deg, #fff 60%, #f0faf4 100%);
+}
+.badge {
+  position: absolute; top: 12px; right: 12px;
+  background: var(--accent); color: #fff;
+  border-radius: 99px; padding: 2px 9px; font-size: 9px; font-weight: 700;
+  letter-spacing: .05em; text-transform: uppercase;
+}
+.brand-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.brand-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.brand-name {
+  font-size: 12px; font-weight: 600; color: var(--text2);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 130px;
+}
+.price-val {
+  font-family: var(--sans); font-size: 34px; font-weight: 800;
+  letter-spacing: -.04em; line-height: 1; margin-bottom: 8px;
+  transition: color .3s;
+}
+.price-val.best { color: var(--accent); }
+.price-val.norm { color: var(--text); }
+.price-val.none { color: var(--text3); }
+.price-unit { font-size: 13px; color: var(--text3); margin-left: 2px; font-weight: 400; }
+.card-addr { font-size: 11px; color: var(--text3); line-height: 1.6; }
+.card-dist { font-size: 11px; color: var(--text3); }
+.card-closed { font-size: 10px; color: var(--red); margin-top: 4px; font-weight: 500; }
+.card-diff { margin-top: 8px; font-size: 11px; color: var(--amber); font-weight: 500; }
+
+/* ── DIVIDER ─────────────────────────────────────────────────────────────────── */
+.divider { height: 1px; background: var(--border); margin: 4px 0 20px; }
+
+/* ── TIP BOX ─────────────────────────────────────────────────────────────────── */
+.tip-box {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 18px 20px;
+  box-shadow: var(--shadow);
+  animation: fadeUp .5s .2s ease both;
+}
+.tip-title {
+  font-size: 10px; font-weight: 700; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--text3); margin-bottom: 12px;
+}
+.tip-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+.tip-card {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 12px; padding: 12px 14px;
+}
+.tip-lbl { font-size: 11px; color: var(--text3); margin-bottom: 4px; }
+.tip-val { font-size: 15px; font-weight: 700; }
+.tip-val.g { color: var(--accent); }
+.tip-val.w { color: var(--text); }
+.tip-sub  { font-size: 11px; color: var(--accent); margin-top: 3px; }
+.tip-sub2 { font-size: 11px; color: var(--accent); margin-top: 3px; }
+.tip-sub3 { font-size: 11px; color: var(--text3); margin-top: 3px; }
+
+/* ── SKELETON ────────────────────────────────────────────────────────────────── */
+.skel-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 24px; }
+.skel-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 16px; box-shadow: var(--shadow); }
+.skel { border-radius: 6px; background: linear-gradient(90deg, var(--border) 25%, var(--bg2) 50%, var(--border) 75%); background-size: 200% 100%; animation: shimmer 1.5s ease infinite; }
+
+/* ── FOOTER ──────────────────────────────────────────────────────────────────── */
+.footer {
+  margin-top: 28px; text-align: center; font-size: 10px;
+  color: var(--text3); letter-spacing: .04em;
+}
+
+/* ── ANIMATIONS ──────────────────────────────────────────────────────────────── */
+@keyframes fadeUp  { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
+@keyframes blink   { 0%,100%{opacity:1} 50%{opacity:.3} }
+@keyframes spin    { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+.section:nth-child(1) { animation-delay: .05s; }
+.section:nth-child(2) { animation-delay: .10s; }
+.section:nth-child(3) { animation-delay: .15s; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <div class="eyebrow">Diesel · Echtzeit · Tankerkönig</div>
+    <h1 id="title">🏠 Dinkelsbühl</h1>
+    <div class="sub" id="subtitle">Günstigste Tankstellen vor Ort</div>
+    <div class="hint" id="wed-hint">💡 Mittwochs wechselt das Dashboard automatisch zur Routen-Ansicht</div>
+  </div>
+  <div class="header-right">
+    <div class="pill load" id="pill">
+      <span class="spin" id="pill-icon">⟳</span>
+      <span id="pill-txt">Verbinde…</span>
+    </div>
+    <div class="btns">
+      <button id="btn-reload" onclick="doLoad()">⟳ Aktualisieren</button>
+      <button id="btn-norm"   onclick="setMode(false)">Normal</button>
+      <button id="btn-wed"    onclick="setMode(true)">Mittwoch</button>
+    </div>
+  </div>
+</div>
+
+<!-- SKELETON -->
+<div id="skeleton">
+  <div class="skel-grid">
+    <div class="skel-card"><div class="skel" style="width:60px;height:10px;margin-bottom:14px"></div><div class="skel" style="width:100px;height:30px;margin-bottom:10px"></div><div class="skel" style="width:120px;height:9px"></div></div>
+    <div class="skel-card"><div class="skel" style="width:60px;height:10px;margin-bottom:14px"></div><div class="skel" style="width:100px;height:30px;margin-bottom:10px"></div><div class="skel" style="width:120px;height:9px"></div></div>
+    <div class="skel-card"><div class="skel" style="width:60px;height:10px;margin-bottom:14px"></div><div class="skel" style="width:100px;height:30px;margin-bottom:10px"></div><div class="skel" style="width:120px;height:9px"></div></div>
+  </div>
+</div>
+
+<!-- CONTENT -->
+<div id="content" style="display:none"></div>
+
+<div class="footer">Echtzeit-Daten: Tankerkönig · MTS-K · Aktualisierung alle 5 Minuten</div>
+
+<script>
+const API_KEY = "95fba7f4-bdc1-4dc6-906b-290729926419";
+const AREAS = {
+  dinkelsbuhl:{ lat:49.0706, lng:10.3196, rad:3, label:"Dinkelsbühl" },
+  fremdingen: { lat:48.9751, lng:10.4492, rad:4, label:"Fremdingen"  },
+  monheim:    { lat:48.8444, lng:10.8583, rad:4, label:"Monheim"     },
+  wemding:    { lat:48.8720, lng:10.7205, rad:3, label:"Wemding"     },
+};
+const COLORS = {
+  ARAL:"#0066b2",SHELL:"#d4a017",JET:"#d97706",ESSO:"#c0392b",
+  TOTAL:"#c0392b",TOTALENERGIES:"#c0392b",BAYWA:"#1d6b3e",BP:"#00843d",
+  AGIP:"#c0392b",WESTFALEN:"#003f7f",AVIA:"#c0392b",HEM:"#6d28d9",
+  STAR:"#b45309",ORLEN:"#9b1c1c",OIL:"#c2410c",
+};
+const col = b => COLORS[(b||"").toUpperCase()] || "#6b6560";
+let forceMode = null;
+const isWed = () => forceMode !== null ? forceMode : new Date().getDay() === 3;
+const getPrice = s => {
+  const p = s.price ?? s.diesel ?? null;
+  if (p === false || p == null) return null;
+  const n = parseFloat(p); return isNaN(n) ? null : n;
+};
+
+async function fetchArea(area) {
+  const url = `https://creativecommons.tankerkoenig.de/json/list.php?lat=${area.lat}&lng=${area.lng}&rad=${area.rad}&sort=price&type=diesel&apikey=${API_KEY}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("HTTP " + res.status);
+  const d = await res.json();
+  if (!d.ok) throw new Error(d.message || "API Fehler");
+  return d.stations || [];
+}
+
+function cardHTML(s, minP) {
+  const p = getPrice(s);
+  const best = p != null && Math.abs(p - minP) < 0.002;
+  const diff = p != null && !best ? p - minP : null;
+  const c = col(s.brand);
+  return `
+  <div class="card ${best?"best":""}">
+    ${best && p != null ? `<div class="badge">Günstigste</div>` : ""}
+    <div class="brand-row">
+      <div class="brand-dot" style="background:${c}"></div>
+      <span class="brand-name">${s.brand||s.name||"–"}</span>
+    </div>
+    <div class="price-val ${p!=null?(best?"best":"norm"):"none"}">
+      ${p!=null?p.toFixed(3):"–.–––"}<span class="price-unit">€</span>
+    </div>
+    <div class="card-addr">${s.street||""} ${s.houseNumber||""}</div>
+    <div class="card-dist">${(s.dist||0).toFixed(1)} km entfernt</div>
+    ${s.isOpen===false?`<div class="card-closed">⚠ Geschlossen</div>`:""}
+    ${diff&&diff>0.001?`<div class="card-diff">+${diff.toFixed(3)} € teurer</div>`:""}
+  </div>`;
+}
+
+function secHTML(emoji, title, stations, delay) {
+  const all = (stations||[])
+    .map(s=>({...s,_p:getPrice(s)})).filter(s=>s._p!=null)
+    .sort((a,b)=>a._p-b._p).slice(0,3);
+  if (!all.length) return `<div class="section"><div class="sec-title">${emoji} ${title}</div><div style="color:var(--text3);font-size:12px;padding:8px 0">Keine Preise verfügbar.</div></div>`;
+  const minP = all[0]._p;
+  all.forEach(s=>s.price=s._p);
+  return `<div class="section" style="animation-delay:${delay||0}s">
+    <div class="sec-title">${emoji}&nbsp; ${title}</div>
+    <div class="card-grid">${all.map(s=>cardHTML(s,minP)).join("")}</div>
+  </div>`;
+}
+
+function render(data) {
+  const wed = isWed();
+  const active = wed
+    ? [...(data.fremdingen||[]),...(data.monheim||[]),...(data.wemding||[])]
+    : (data.dinkelsbuhl||[]);
+  const withP = active.map(s=>({...s,_p:getPrice(s)})).filter(s=>s._p!=null);
+  const best  = withP.length ? withP.reduce((a,b)=>a._p<b._p?a:b) : null;
+  const worst = withP.length ? withP.reduce((a,b)=>a._p>b._p?a:b) : null;
+
+  let tip = "";
+  if (best) {
+    const bp=best._p, wp=worst?._p;
+    const savings = worst && worst.id!==best.id && wp>bp
+      ? `<div class="tip-card"><div class="tip-lbl">Ersparnis vs. teuerste (50 L)</div><div class="tip-val w">${((wp-bp)*50).toFixed(2)} €</div><div class="tip-sub3">${best.brand} vs. ${worst.brand}</div></div>`
+      : `<div class="tip-card"><div class="tip-lbl">Bestes Zeitfenster heute</div><div class="tip-val w">18:00 – 19:00 Uhr</div><div class="tip-sub2">ca. 2–3 Cent/L günstiger</div></div>`;
+    tip = `<div class="tip-box"><div class="tip-title">💡 ${wed?"Empfehlung für heute":"Spartipp"}</div><div class="tip-grid">
+      <div class="tip-card"><div class="tip-lbl">${wed?"Günstigste auf der Route":"Günstigste jetzt"}</div><div class="tip-val g">${best.brand} &middot; ${bp.toFixed(3)} €</div><div class="tip-sub">${best.street||""} ${best.houseNumber||""} &middot; ${(best.dist||0).toFixed(1)} km</div></div>
+      ${savings}</div></div>`;
+  }
+
+  let html = "";
+  if (wed) {
+    html += `<div class="route-banner" style="animation:fadeUp .4s ease both">
+      <span class="stop">Dinkelsbühl</span><span class="arrow">→</span>
+      <span class="stop">Fremdingen</span><span class="arrow">→</span>
+      <span class="stop">Monheim</span><span class="arrow">↔</span>
+      <span class="stop">Wemding</span>
+      <span class="rlbl">Mittwoch · Arbeitsroute</span>
+    </div>`;
+    html += secHTML("📍","Fremdingen · Auf dem Weg (B25)", data.fremdingen, .05);
+    html += secHTML("🏭","Monheim · Nähe Hammer",          data.monheim,    .10);
+    html += secHTML("🏘","Wemding",                        data.wemding,    .15);
+  } else {
+    html += secHTML("⛽","Tankstellen Dinkelsbühl · Diesel aktuell", data.dinkelsbuhl, .05);
+  }
+  html += tip;
+
+  document.getElementById("content").innerHTML = html;
+  document.getElementById("skeleton").style.display = "none";
+  document.getElementById("content").style.display = "block";
+  document.getElementById("title").textContent    = wed ? "🚗 Mittwoch-Route" : "🏠 Dinkelsbühl";
+  document.getElementById("subtitle").textContent = wed ? "Fremdingen · Monheim · Wemding" : "Günstigste Tankstellen vor Ort";
+  document.getElementById("wed-hint").style.display = wed ? "none" : "inline-flex";
+}
+
+function setPill(state, txt) {
+  const pill = document.getElementById("pill");
+  pill.className = "pill " + state;
+  const icon = document.getElementById("pill-icon");
+  if (state==="load") { icon.className="spin"; icon.textContent="⟳"; }
+  else { icon.className="pdot "+state; icon.textContent=""; }
+  document.getElementById("pill-txt").textContent = txt;
+}
+
+async function doLoad() {
+  document.getElementById("btn-reload").disabled = true;
+  setPill("load","Lade…");
+  const keys = isWed()
+    ? ["dinkelsbuhl","fremdingen","monheim","wemding"]
+    : ["dinkelsbuhl"];
+  const result = {};
+  for (const k of keys) {
+    try { result[k] = await fetchArea(AREAS[k]); }
+    catch(e) { result[k]=[]; console.error(k,e); }
+  }
+  const total = Object.values(result).reduce((n,a)=>n+a.length,0);
+  if (total===0) {
+    setPill("err","Keine Daten");
+  } else {
+    render(result);
+    const t = new Date().toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
+    setPill("ok","Aktuell · "+t);
+  }
+  document.getElementById("btn-reload").disabled = false;
+}
+
+function setMode(val) {
+  forceMode = (forceMode===val) ? null : val;
+  document.getElementById("btn-norm").classList.toggle("on", forceMode===false);
+  document.getElementById("btn-wed").classList.toggle("on",  forceMode===true);
+  document.getElementById("content").style.display = "none";
+  document.getElementById("skeleton").style.display = "block";
+  doLoad();
+}
+
+if (new Date().getDay()===3) document.getElementById("btn-wed").classList.add("on");
+setInterval(doLoad, 5*60*1000);
+doLoad();
+</script>
+</body>
+</html>
